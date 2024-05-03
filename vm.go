@@ -1,6 +1,7 @@
 package gotvm
 
 import (
+	"github.com/tvarney/gotvm/cerr"
 	"github.com/tvarney/gotvm/op"
 )
 
@@ -46,12 +47,12 @@ func coerceInt(v interface{}) (int64, error) {
 	case float64:
 		return int64(value), nil
 	}
-	return 0, ConstError("can't coerce value to int")
+	return 0, cerr.Error("can't coerce value to int")
 }
 
 func constArgU32(code op.ByteCode, idx int) (uint32, error) {
 	if idx < 0 || idx >= len(code) {
-		return 0, ConstError("malformed bytecode; missing const arg")
+		return 0, cerr.Error("malformed bytecode; missing const arg")
 	}
 	return uint32(code[idx]), nil
 }
@@ -62,7 +63,7 @@ func constArgU64(code op.ByteCode, idx int) (uint64, error) {
 	// *so* much - we have to be overly verbose to account for overflow to
 	// avoid runtime.panicIndex() being inserted
 	if idx < 0 || idx >= len(code) || idx2 < 0 || idx2 >= len(code) {
-		return 0, ConstError("malformed bytecode; missing const arg")
+		return 0, cerr.Error("malformed bytecode; missing const arg")
 	}
 	return uint64(code[idx])<<32 + uint64(code[idx2]), nil
 }

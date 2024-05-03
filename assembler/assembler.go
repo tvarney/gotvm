@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tvarney/gotvm"
+	"github.com/tvarney/gotvm/cerr"
 	"github.com/tvarney/gotvm/op"
 )
 
 const (
-	ErrInvalidArgCount = gotvm.ConstError("incorrect number of arguments")
+	ErrInvalidArgCount = cerr.Error("incorrect number of arguments")
 )
 
 type Definition struct {
@@ -41,6 +41,13 @@ func (d *Definition) Parse(code op.ByteCode, argvalues []rune) (op.ByteCode, err
 		if parseErr != nil && err == nil {
 			err = parseErr
 		}
+	}
+
+	if len(argvalues) > 0 {
+		return code, fmt.Errorf(
+			"%w: %s takes %d arguments; too many arguments",
+			ErrInvalidArgCount, d.Name, len(d.Arguments),
+		)
 	}
 
 	return code, err
@@ -75,21 +82,20 @@ func RemoveComment(line string) string {
 	return line[:idx]
 }
 
+type AssembleError struct {
+	LineNo  int
+	Line    string
+	Message string
+}
+
 // Assemble takes a text file and converts it to bytecode.
 //
 // The syntax of a line in the assembly is:
 //
 //	OPCODE [ARG ARG ...] [; Comment]
-func Assemble(lines []string, report func(string, int, string)) op.ByteCode {
-	// Build our definition table if it hasn't already been done
-	if len(definitions) == 0 {
-		for _, def := range ops {
-			definitions[strings.ToLower(def.Name)] = def
-		}
-	}
-
+func Assemble(lines []string, report func(AssembleError)) op.ByteCode {
 	if report == nil {
-		report = func(string, int, string) {}
+		report = ReportDiscard
 	}
 
 	size := len(lines) * 3 / 4
@@ -109,17 +115,27 @@ func Assemble(lines []string, report func(string, int, string)) op.ByteCode {
 		opcode, rest, _ := CutSpace(runes)
 		def, ok := definitions[strings.ToLower(opcode)]
 		if !ok {
-			report(fmt.Sprintf("Invalid opcode %q", opcode), idx, line)
+			report(AssembleError{idx + 1, line, fmt.Sprintf("invalid opcode %q", opcode)})
 			continue
 		}
 
 		result, err := def.Parse(code, rest)
 		code = result
 		if err != nil {
-			report(err.Error(), idx, line)
+			report(AssembleError{idx + 1, line, err.Error()})
 			continue
 		}
 	}
 
+	if len(code) == 0 {
+		return nil
+	}
 	return code
+}
+
+func init() {
+	// There isn't really a great way to do this
+	for _, def := range ops {
+		definitions[strings.ToLower(def.Name)] = def
+	}
 }

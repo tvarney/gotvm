@@ -33,7 +33,3 @@ const (
 	Call
 	NativeCall
 )
-
-func ConvertInt(v int32) Op {
-	return Op(uint32(v))
-}

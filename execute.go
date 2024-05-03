@@ -1,6 +1,7 @@
 package gotvm
 
 import (
+	"github.com/tvarney/gotvm/cerr"
 	"github.com/tvarney/gotvm/op"
 )
 
@@ -28,77 +29,77 @@ func (vm *VirtualMachine) Execute(code op.ByteCode) error {
 		case op.PushInt32:
 			v, err := constArgU32(code, idx+1)
 			if err != nil {
-				return ConstError("missing const arg to op.PushInt32")
+				return cerr.Error("missing const arg to op.PushInt32")
 			}
 			vm.push(int64(int32(v)))
 			idx += 2
 		case op.PushInt64:
 			v, err := constArgU64(code, idx+1)
 			if err != nil {
-				return ConstError("missing const arg to op.PushInt64")
+				return cerr.Error("missing const arg to op.PushInt64")
 			}
 			vm.push(int64(v))
 			idx += 3
 		case op.PushUint32:
 			v, err := constArgU32(code, idx+1)
 			if err != nil {
-				return ConstError("missing const arg to op.PushUint32")
+				return cerr.Error("missing const arg to op.PushUint32")
 			}
 			vm.push(uint64(v))
 			idx += 2
 		case op.PushUint64:
 			v, err := constArgU64(code, idx+1)
 			if err != nil {
-				return ConstError("missing const arg to op.PushUint64")
+				return cerr.Error("missing const arg to op.PushUint64")
 			}
 			vm.push(uint64(v))
 			idx += 3
 		case op.Pop:
 			if len(vm.Stack) <= 0 || idx < 0 {
-				return ConstError("too few arguments on stack for op.Pop")
+				return cerr.Error("too few arguments on stack for op.Pop")
 			}
 			vm.Stack = vm.Stack[:len(vm.Stack)-1]
 			idx++
 		case op.PopN:
 			v, err := constArgU32(code, idx+1)
 			if err != nil {
-				return ConstError("missing const arg to op.PopN")
+				return cerr.Error("missing const arg to op.PopN")
 			}
 			last := len(vm.Stack) - int(v)
 			if last < 0 || last >= len(vm.Stack) {
-				return ConstError("too few arguments on stack for op.PopN")
+				return cerr.Error("too few arguments on stack for op.PopN")
 			}
 			vm.Stack = vm.Stack[:last]
 			idx += 2
 		case op.Copy:
 			v, err := constArgU32(code, idx+1)
 			if err != nil {
-				return ConstError("missing const arg to op.Copy")
+				return cerr.Error("missing const arg to op.Copy")
 			}
 			ref := vm.FrameBase + int(v)
 			if ref >= len(vm.Stack) || ref < 0 {
-				return ConstError("copy index out of bounds")
+				return cerr.Error("copy index out of bounds")
 			}
 			vm.push(vm.Stack[ref])
 			idx += 2
 		case op.Swap:
 			v, err := constArgU32(code, idx+1)
 			if err != nil {
-				return ConstError("missing const arg to op.Swap")
+				return cerr.Error("missing const arg to op.Swap")
 			}
 			ref := vm.FrameBase + int(v)
 			if ref >= len(vm.Stack) || ref < 0 {
-				return ConstError("swap index out of bounds")
+				return cerr.Error("swap index out of bounds")
 			}
 			last := len(vm.Stack) - 1
 			if last <= 0 {
-				return ConstError("nothing in stack to swap for op.Swap")
+				return cerr.Error("nothing in stack to swap for op.Swap")
 			}
 			vm.Stack[ref], vm.Stack[last] = vm.Stack[last], vm.Stack[ref]
 			idx += 2
 		case op.Negative:
 			if len(vm.Stack) < 1 {
-				return ConstError("too few arguments on stack for op.Negative")
+				return cerr.Error("too few arguments on stack for op.Negative")
 			}
 			iv := vm.Stack[len(vm.Stack)-1]
 			vm.Stack = vm.Stack[:len(vm.Stack)-1]
@@ -110,12 +111,12 @@ func (vm *VirtualMachine) Execute(code op.ByteCode) error {
 			case int64:
 				vm.Stack = append(vm.Stack, -v)
 			default:
-				return ConstError("invalid type for op.Negative")
+				return cerr.Error("invalid type for op.Negative")
 			}
 			idx++
 		case op.AddInt:
 			if len(vm.Stack) < 2 {
-				return ConstError("too few arguments on stack for op.AddInt")
+				return cerr.Error("too few arguments on stack for op.AddInt")
 			}
 			v1, err := coerceInt(vm.Stack[len(vm.Stack)-1])
 			if err != nil {

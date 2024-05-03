@@ -2,15 +2,16 @@ package assembler
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 
-	"github.com/tvarney/gotvm"
+	"github.com/tvarney/gotvm/cerr"
 	"github.com/tvarney/gotvm/op"
 )
 
 const (
-	ErrInvalidArgValue = gotvm.ConstError("invalid argument value")
-	ErrInvalidArgType  = gotvm.ConstError("internal error: invalid argument type")
+	ErrInvalidArgValue = cerr.Error("invalid argument value")
+	ErrInvalidArgType  = cerr.Error("internal error: invalid argument type")
 )
 
 // ArgType is a value indicating the expected argument type to an opcode.
@@ -27,12 +28,12 @@ const (
 
 var (
 	argParseLookup = []func([]rune, op.ByteCode) ([]rune, op.ByteCode, error){
-		ParseArgInt32,
-		ParseArgInt64,
-		ParseArgUint32,
-		ParseArgUint64,
-		ParseArgFloat32,
-		ParseArgFloat64,
+		parseArgInt32,
+		parseArgInt64,
+		parseArgUint32,
+		parseArgUint64,
+		parseArgFloat32,
+		parseArgFloat64,
 	}
 )
 
@@ -44,11 +45,11 @@ func (a ArgType) Parse(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, erro
 	return argParseLookup[int(a)](rest, code)
 }
 
-// ParseArgInt32 implements the argument parsing logic for a 32-bit int.
-func ParseArgInt32(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) {
-	if rest == nil {
+// parseArgInt32 implements the argument parsing logic for a 32-bit int.
+func parseArgInt32(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) {
+	if len(rest) <= 0 {
 		code = append(code, 0)
-		return rest, code, ErrInvalidArgCount
+		return nil, code, ErrInvalidArgCount
 	}
 	strval, rest, _ := CutSpace(rest)
 	ival, err := ParseInt(strval, 32)
@@ -60,11 +61,11 @@ func ParseArgInt32(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) {
 	return rest, code, nil
 }
 
-// ParseArgInt64 implements the argument parsing logic for a 64-bit int.
-func ParseArgInt64(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) {
-	if rest == nil {
+// parseArgInt64 implements the argument parsing logic for a 64-bit int.
+func parseArgInt64(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) {
+	if len(rest) == 0 {
 		code = append(code, 0, 0)
-		return rest, code, ErrInvalidArgCount
+		return nil, code, ErrInvalidArgCount
 	}
 	strval, rest, _ := CutSpace(rest)
 	ival, err := ParseInt(strval, 64)
@@ -81,12 +82,12 @@ func ParseArgInt64(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) {
 	return rest, code, nil
 }
 
-// ParseArgUint32 implements the argument parsing logic for a 32-bit unsigned
+// parseArgUint32 implements the argument parsing logic for a 32-bit unsigned
 // int.
-func ParseArgUint32(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) {
-	if rest == nil {
+func parseArgUint32(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) {
+	if len(rest) <= 0 {
 		code = append(code, 0)
-		return rest, code, ErrInvalidArgCount
+		return nil, code, ErrInvalidArgCount
 	}
 	strval, rest, _ := CutSpace(rest)
 	uval, err := ParseUint(strval, 32)
@@ -98,12 +99,12 @@ func ParseArgUint32(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) 
 	return rest, code, nil
 }
 
-// ParseArgUint64 implements the argument parsing logic for a 64-bit unsigned
+// parseArgUint64 implements the argument parsing logic for a 64-bit unsigned
 // int.
-func ParseArgUint64(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) {
-	if rest == nil {
+func parseArgUint64(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) {
+	if len(rest) <= 0 {
 		code = append(code, 0, 0)
-		return rest, code, ErrInvalidArgCount
+		return nil, code, ErrInvalidArgCount
 	}
 	strval, rest, _ := CutSpace(rest)
 	uval, err := ParseUint(strval, 64)
@@ -119,11 +120,11 @@ func ParseArgUint64(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) 
 	return rest, code, nil
 }
 
-// ParseArgFloat32 implements the argument parsing logic for a 32-bit float.
-func ParseArgFloat32(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) {
-	if rest == nil {
+// parseArgFloat32 implements the argument parsing logic for a 32-bit float.
+func parseArgFloat32(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) {
+	if len(rest) <= 0 {
 		code = append(code, 0)
-		return rest, code, ErrInvalidArgCount
+		return nil, code, ErrInvalidArgCount
 	}
 	strval, rest, _ := CutSpace(rest)
 	fval, err := strconv.ParseFloat(strval, 32)
@@ -131,23 +132,23 @@ func ParseArgFloat32(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error)
 		code = append(code, 0)
 		return rest, code, fmt.Errorf("%w: invalid float value %q", ErrInvalidArgValue, strval)
 	}
-	code = append(code, op.Op(uint32(fval)))
+	code = append(code, op.Op(math.Float32bits(float32(fval))))
 	return rest, code, nil
 }
 
-// ParseArgFloat64 implements the argument parsing logic for a 64-bit float.
-func ParseArgFloat64(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) {
-	if rest == nil {
-		code = append(code, 0)
-		return rest, code, ErrInvalidArgCount
+// parseArgFloat64 implements the argument parsing logic for a 64-bit float.
+func parseArgFloat64(rest []rune, code op.ByteCode) ([]rune, op.ByteCode, error) {
+	if len(rest) <= 0 {
+		code = append(code, 0, 0)
+		return nil, code, ErrInvalidArgCount
 	}
 	strval, rest, _ := CutSpace(rest)
-	fval, err := strconv.ParseFloat(strval, 32)
+	fval, err := strconv.ParseFloat(strval, 64)
 	if err != nil {
-		code = append(code, 0)
+		code = append(code, 0, 0)
 		return rest, code, fmt.Errorf("%w: invalid float value %q", ErrInvalidArgValue, strval)
 	}
-	uval := uint64(fval)
+	uval := math.Float64bits(fval)
 	code = append(
 		code,
 		op.Op(uint32((uval&0xFFFFFFFF00000000)>>32)),

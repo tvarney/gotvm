@@ -8,7 +8,7 @@ import (
 )
 
 func CutSpace(line []rune) (string, []rune, bool) {
-	if line == nil {
+	if len(line) == 0 {
 		return "", nil, false
 	}
 
@@ -88,7 +88,7 @@ func ParseInt(value string, bitsize int) (int64, error) {
 	// Parse the value now
 	ival, err := strconv.ParseInt(value, base, bitsize)
 	if err != nil {
-		return 0, fmt.Errorf("%w: invalid integer value", ErrInvalidArgValue)
+		return 0, fmt.Errorf("%w: invalid integer value: %s", ErrInvalidArgValue, err.Error())
 	}
 	if negative {
 		ival = -ival

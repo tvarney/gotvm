@@ -10,10 +10,6 @@ import (
 	"github.com/tvarney/gotvm/assembler"
 )
 
-func reportErr(msg string, lineno int, _ string) {
-	fmt.Printf("Error @ line %d: %s\n", lineno, msg)
-}
-
 func main() {
 	showBytecode := false
 	showStack := false
@@ -35,7 +31,7 @@ func main() {
 		os.Exit(1)
 	}
 	lines := strings.Split(string(content), "\n")
-	bytecode := assembler.Assemble(lines, reportErr)
+	bytecode := assembler.Assemble(lines, assembler.ReportPrint)
 	if bytecode == nil {
 		fmt.Printf("Error: no bytecode assembled")
 		os.Exit(1)
