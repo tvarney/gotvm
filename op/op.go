@@ -9,25 +9,36 @@ const (
 	Halt
 
 	// Stack Operations
-	PushInt32   // STACK.push(i32)
-	PushInt64   // STACK.push(i64)
-	PushUint32  // STACK.push(u32)
-	PushUint64  // STACK.push(u64)
-	PushFloat32 // STACK.push(f32)
-	PushFloat64 // STACK.push(f64)
-	Pop         // STACK.pop(1)
-	PopN        // STACK.pop(u32)
-	Copy        // STACK.push(stack[-int(u32)])
-	Swap        // v = STACK[-int(u32)]; STACK[-int(u32)] = STACK[-1]; STACK[-1] = v
+	PushInt32   // Push a constant i32 to the stack
+	PushInt64   // Push a constant i64 to the stack
+	PushUint32  // Push a constant u32 to the stack
+	PushUint64  // Push a constant u64 to the stack
+	PushFloat32 // Push a constant f32 to the stack
+	PushFloat64 // Push a constant f64 to the stack
+	Pop         // Pop a single value from the stack
+	PopN        // Pop N values from the stack
+	PopC        // Pop a constant C values from the stack
+	Copy        // Copy a value within the stack
+	Swap        // Swap the topmost value on the stack with another
 
 	// Unary Operations
-	Negative // STACK[-1] = -STACK[-1]
+	Negative // Negate the topmost value on the stack
 
 	// Binary Operations
-	AddInt
-	SubInt
-	MulInt
-	DivInt
+	AddInt // Add the topmost two values on the stack
+	SubInt // Subtract the topmost two values on the stack
+	MulInt // Multiply the topmost two values on the stack
+	DivInt // Divide the topmost two values on the stack
+
+	// Const Binary Operations
+	AddConstInt // Add a constant value to the topmost value on the stack
+	SubConstInt // Subtract a constant value from the topmost value on the stack
+	MulConstInt // Multiple the topmost value on the stack by a constant value
+	DivConstInt // Divide the topmost value on the stack by a constant value
+
+	// Generic increment/decrement
+	Increment // Increment the topmost value on the stack
+	Decrement // Decrement the topmost value on the stack
 
 	// Functions
 	Call
