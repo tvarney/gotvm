@@ -1,14 +1,13 @@
-package gotvm
+package vmerr
 
-import (
-	"github.com/tvarney/gotvm/cerr"
-)
+import "strconv"
 
 const (
-	ErrTooFewValues     cerr.Error = "too few arguments on stack"
-	ErrInvalidType      cerr.Error = "invalid type"
-	ErrIndexOutOfBounds cerr.Error = "index out of bounds"
-	ErrMissingConstArg  cerr.Error = "missing const arg"
+	ErrTooFewValues     ConstError = "too few arguments on stack"
+	ErrInvalidType      ConstError = "invalid type"
+	ErrIndexOutOfBounds ConstError = "index out of bounds"
+	ErrMissingConstArg  ConstError = "missing const arg"
+	ErrInvalidOpcode    ConstError = "invalid opcode"
 )
 
 // TooFewValuesError is an error type wrapping the ErrTooFewValues constant
@@ -65,4 +64,18 @@ func (e MissingConstArgError) Unwrap() error {
 
 func (e MissingConstArgError) Error() string {
 	return string(ErrMissingConstArg) + " for " + e.OpCode
+}
+
+// InvalidOpcodeError is an error type wrapping the ErrInvalidOpcode constant
+// error with the opcode which is unknown.
+type InvalidOpcodeError struct {
+	OpCode uint32
+}
+
+func (e InvalidOpcodeError) Unwrap() error {
+	return ErrInvalidOpcode
+}
+
+func (e InvalidOpcodeError) Error() string {
+	return string(ErrInvalidOpcode) + "0x" + strconv.FormatUint(uint64(e.OpCode), 16)
 }

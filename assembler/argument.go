@@ -5,13 +5,13 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/tvarney/gotvm/cerr"
 	"github.com/tvarney/gotvm/op"
+	"github.com/tvarney/gotvm/vmerr"
 )
 
 const (
-	ErrInvalidArgValue = cerr.Error("invalid argument value")
-	ErrInvalidArgType  = cerr.Error("internal error: invalid argument type")
+	ErrInvalidArgValue = vmerr.ConstError("invalid argument value")
+	ErrInvalidArgType  = vmerr.ConstError("internal error: invalid argument type")
 )
 
 // ArgType is a value indicating the expected argument type to an opcode.

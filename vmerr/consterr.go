@@ -1,9 +1,9 @@
-package cerr
+package vmerr
 
 // ConstError is a constant error type.
-type Error string
+type ConstError string
 
 // Error returns the description of the error.
-func (e Error) Error() string {
+func (e ConstError) Error() string {
 	return string(e)
 }

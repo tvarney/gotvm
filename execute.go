@@ -2,6 +2,7 @@ package gotvm
 
 import (
 	"github.com/tvarney/gotvm/op"
+	"github.com/tvarney/gotvm/vmerr"
 )
 
 // Execute takes a chunk of ByteCode and runs it in the VirtualMachine
@@ -35,79 +36,79 @@ func (vm *VirtualMachine) Execute(code op.ByteCode) error {
 		case op.Halt:
 			return nil
 		case op.PushInt32:
-			v, err := constArgU32(code, idx+1)
+			v, err := op.ConstArgU32(code, idx+1)
 			if err != nil {
-				return MissingConstArgError{OpCode: "PushInt32"}
+				return vmerr.MissingConstArgError{OpCode: "PushInt32"}
 			}
 			vm.push(int64(int32(v)))
 			idx += 2
 		case op.PushInt64:
-			v, err := constArgU64(code, idx+1)
+			v, err := op.ConstArgU64(code, idx+1)
 			if err != nil {
-				return MissingConstArgError{OpCode: "PushInt64"}
+				return vmerr.MissingConstArgError{OpCode: "PushInt64"}
 			}
 			vm.push(int64(v))
 			idx += 3
 		case op.PushUint32:
-			v, err := constArgU32(code, idx+1)
+			v, err := op.ConstArgU32(code, idx+1)
 			if err != nil {
-				return MissingConstArgError{OpCode: "PushUint32"}
+				return vmerr.MissingConstArgError{OpCode: "PushUint32"}
 			}
 			vm.push(uint64(v))
 			idx += 2
 		case op.PushUint64:
-			v, err := constArgU64(code, idx+1)
+			v, err := op.ConstArgU64(code, idx+1)
 			if err != nil {
-				return MissingConstArgError{OpCode: "PushUint64"}
+				return vmerr.MissingConstArgError{OpCode: "PushUint64"}
 			}
 			vm.push(uint64(v))
 			idx += 3
 		case op.Pop:
 			if len(vm.Stack) <= 0 || idx < 0 {
-				return TooFewValuesError{OpCode: "Pop"}
+				return vmerr.TooFewValuesError{OpCode: "Pop"}
 			}
 			vm.Stack = vm.Stack[:len(vm.Stack)-1]
 			idx++
 		case op.PopN:
-			v, err := constArgU32(code, idx+1)
+			v, err := op.ConstArgU32(code, idx+1)
 			if err != nil {
-				return MissingConstArgError{OpCode: "PopN"}
+				return vmerr.MissingConstArgError{OpCode: "PopN"}
 			}
 			last := len(vm.Stack) - int(v)
 			if last < 0 || last >= len(vm.Stack) {
-				return TooFewValuesError{OpCode: "PopN"}
+				return vmerr.TooFewValuesError{OpCode: "PopN"}
 			}
 			vm.Stack = vm.Stack[:last]
 			idx += 2
 		case op.Copy:
-			v, err := constArgU32(code, idx+1)
+			v, err := op.ConstArgU32(code, idx+1)
 			if err != nil {
-				return MissingConstArgError{OpCode: "Copy"}
+				return vmerr.MissingConstArgError{OpCode: "Copy"}
 			}
 			ref := vm.FrameBase + int(v)
 			if ref >= len(vm.Stack) || ref < 0 {
-				return IndexOutOfBoundsError{OpCode: "Copy"}
+				return vmerr.IndexOutOfBoundsError{OpCode: "Copy"}
 			}
 			vm.push(vm.Stack[ref])
 			idx += 2
 		case op.Swap:
-			v, err := constArgU32(code, idx+1)
+			v, err := op.ConstArgU32(code, idx+1)
 			if err != nil {
-				return MissingConstArgError{OpCode: "Swap"}
+				return vmerr.MissingConstArgError{OpCode: "Swap"}
 			}
 			ref := vm.FrameBase + int(v)
 			if ref >= len(vm.Stack) || ref < 0 {
-				return IndexOutOfBoundsError{OpCode: "Swap"}
+				return vmerr.IndexOutOfBoundsError{OpCode: "Swap"}
 			}
 			last := len(vm.Stack) - 1
 			if last <= 0 {
-				return IndexOutOfBoundsError{OpCode: "Swap"}
+				return vmerr.IndexOutOfBoundsError{OpCode: "Swap"}
 			}
 			vm.Stack[ref], vm.Stack[last] = vm.Stack[last], vm.Stack[ref]
 			idx += 2
 		case op.Negative:
 			if len(vm.Stack) < 1 {
-				return TooFewValuesError{OpCode: "Negative"}
+				return vmerr.TooFewValuesError{OpCode: "Negative"}
 			}
 			iv := vm.Stack[len(vm.Stack)-1]
 			vm.Stack = vm.Stack[:len(vm.Stack)-1]
@@ -119,12 +120,12 @@ func (vm *VirtualMachine) Execute(code op.ByteCode) error {
 			case int64:
 				vm.Stack = append(vm.Stack, -v)
 			default:
-				return InvalidTypeError{OpCode: "Negative"}
+				return vmerr.InvalidTypeError{OpCode: "Negative"}
 			}
 			idx++
 		case op.AddInt:
 			if len(vm.Stack) < 2 {
-				return TooFewValuesError{OpCode: "AddInt"}
+				return vmerr.TooFewValuesError{OpCode: "AddInt"}
 			}
 			v1, err := coerceInt(vm.Stack[len(vm.Stack)-1])
 			if err != nil {
@@ -139,7 +140,7 @@ func (vm *VirtualMachine) Execute(code op.ByteCode) error {
 			idx++
 		case op.SubInt:
 			if len(vm.Stack) < 2 {
-				return TooFewValuesError{OpCode: "SubInt"}
+				return vmerr.TooFewValuesError{OpCode: "SubInt"}
 			}
 			v1, err := coerceInt(vm.Stack[len(vm.Stack)-1])
 			if err != nil {
@@ -154,7 +155,7 @@ func (vm *VirtualMachine) Execute(code op.ByteCode) error {
 			idx++
 		case op.MulInt:
 			if len(vm.Stack) < 2 {
-				return TooFewValuesError{OpCode: "MulInt"}
+				return vmerr.TooFewValuesError{OpCode: "MulInt"}
 			}
 			v1, err := coerceInt(vm.Stack[len(vm.Stack)-1])
 			if err != nil {
@@ -169,7 +170,7 @@ func (vm *VirtualMachine) Execute(code op.ByteCode) error {
 			idx++
 		case op.DivInt:
 			if len(vm.Stack) < 2 {
-				return TooFewValuesError{OpCode: "DivInt"}
+				return vmerr.TooFewValuesError{OpCode: "DivInt"}
 			}
 			v1, err := coerceInt(vm.Stack[len(vm.Stack)-1])
 			if err != nil {
@@ -184,7 +185,7 @@ func (vm *VirtualMachine) Execute(code op.ByteCode) error {
 			idx++
 		case op.Increment:
 			if len(vm.Stack) < 1 {
-				return TooFewValuesError{OpCode: "Increment"}
+				return vmerr.TooFewValuesError{OpCode: "Increment"}
 			}
 			ival := vm.Stack[len(vm.Stack)-1]
 			vm.Stack = vm.Stack[:len(vm.Stack)-1]
@@ -196,11 +197,11 @@ func (vm *VirtualMachine) Execute(code op.ByteCode) error {
 			case float64:
 				vm.Stack = append(vm.Stack, v+1)
 			default:
-				return InvalidTypeError{"Increment"}
+				return vmerr.InvalidTypeError{OpCode: "Increment"}
 			}
 		case op.Decrement:
 			if len(vm.Stack) < 1 {
-				return TooFewValuesError{OpCode: "Decrement"}
+				return vmerr.TooFewValuesError{OpCode: "Decrement"}
 			}
 			ival := vm.Stack[len(vm.Stack)-1]
 			vm.Stack = vm.Stack[:len(vm.Stack)-1]
@@ -212,7 +213,7 @@ func (vm *VirtualMachine) Execute(code op.ByteCode) error {
 			case float64:
 				vm.Stack = append(vm.Stack, v-1)
 			default:
-				return InvalidTypeError{"Decrement"}
+				return vmerr.InvalidTypeError{OpCode: "Decrement"}
 			}
 		default:
 			idx++

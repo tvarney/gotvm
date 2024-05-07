@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tvarney/gotvm/cerr"
 	"github.com/tvarney/gotvm/op"
+	"github.com/tvarney/gotvm/vmerr"
 )
 
 const (
-	ErrInvalidArgCount = cerr.Error("incorrect number of arguments")
+	ErrInvalidArgCount = vmerr.ConstError("incorrect number of arguments")
 )
 
 type Definition struct {
